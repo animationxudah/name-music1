@@ -19,13 +19,6 @@ import HorizontalRadioList from "./HorizontalRadioList";
 import HorizontalLabelList from "./HorizontalLabelList";
 
 
-const LOCAL_HOME_SONGS = [
-  { id: "home-local-1", name: "Hati-Hati di Jalan", subtitle: "Tulus", album: { name: "name-music Local" }, artists: { primary: [{ name: "Tulus" }] }, image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }], downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }] },
-  { id: "home-local-2", name: "Sumpah", subtitle: "Naim Daniel", album: { name: "name-music Local" }, artists: { primary: [{ name: "Naim Daniel" }] }, image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }], downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }] },
-  { id: "home-local-3", name: "Sial", subtitle: "Mahalini", album: { name: "name-music Local" }, artists: { primary: [{ name: "Mahalini" }] }, image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }], downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }] },
-  { id: "home-local-4", name: "Peluang Kedua", subtitle: "Nabila Razali", album: { name: "name-music Local" }, artists: { primary: [{ name: "Nabila Razali" }] }, image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }], downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },{ quality: "320kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }] },
-];
-
 // Premium Card Component for Songs (Defined OUTSIDE Home to prevent re-mounting)
 const SongCard = ({ item, index, songlink, isPlaying, onPlay, addToQueue, setPlaylistModalSong }) => {
   const isCurrent = item.id === songlink[0]?.id;
@@ -220,7 +213,6 @@ const Home = () => {
 
   const [playlistModalSong, setPlaylistModalSong] = useState(null);
 
-  const hasCatalogApi = Boolean(import.meta.env.VITE_API_BASE_URL);
   const hasRadioApi = Boolean(import.meta.env.VITE_BACKEND_URL);
 
   const HOME_API_LANGUAGES = new Set(["english", "hindi", "punjabi", "gujarati", "rajasthani"]);
@@ -228,10 +220,6 @@ const Home = () => {
   const normalizeRadioLanguage = (lang) => (HOME_API_LANGUAGES.has(lang) ? lang : "hindi");
 
   const getHome = async (lang = language) => {
-    if (!hasCatalogApi) {
-      setHome({ charts: [], playlists: [], albums: [] });
-      return;
-    }
     try {
       const apiLang = normalizeHomeLanguage(lang);
       const response = await getHomeModules(apiLang);
@@ -243,10 +231,6 @@ const Home = () => {
   };
 
   const getDetails = async (lang = language) => {
-    if (!hasCatalogApi) {
-      setDetails(LOCAL_HOME_SONGS);
-      return;
-    }
     try {
       const queryLang = lang === "indonesian" ? "lagu indonesia populer" : lang === "malay" ? "lagu malaysia populer" : lang;
       const pageNo = queryLang === "english" ? page : page2;
@@ -259,7 +243,7 @@ const Home = () => {
       setPage(18);
     } catch (error) {
       console.log("error loading songs", error);
-      setDetails(LOCAL_HOME_SONGS);
+      setDetails([]);
     }
   };
 
@@ -277,7 +261,6 @@ const Home = () => {
   }
 
   function processLikedSongIds() {
-    if (!hasCatalogApi) return [];
     const likedSongs = JSON.parse(localStorage.getItem("likeData")) || [];
     const songIds = likedSongs.map((song) => song.id);
     const uniqueSongIds = Array.from(new Set(songIds));
@@ -370,8 +353,6 @@ const Home = () => {
   }
 
   useEffect(() => {
-    if (!hasCatalogApi) return;
-
     async function loadRegionalPicks() {
       try {
         const [indoRes, malayRes] = await Promise.all([
@@ -389,7 +370,7 @@ const Home = () => {
     }
 
     loadRegionalPicks();
-  }, [hasCatalogApi]);
+  }, []);
 
   async function FinalfetchArtitsRadioSongs(language, radioId) {
     const loadingToast = toast.loading("Tuning into artist station...", {
@@ -412,7 +393,7 @@ const Home = () => {
   }
 
 
-  const isInitialLoading = hasCatalogApi && home === null && details.length === 0;
+  const isInitialLoading = home === null && details.length === 0;
 
   return isInitialLoading ? (
     <Loading />

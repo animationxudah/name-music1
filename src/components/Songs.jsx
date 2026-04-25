@@ -11,57 +11,6 @@ import { searchSongs } from "../services/api";
 import AddToPlaylistModal from "./AddToPlaylistModal";
 import Tooltip from "./Tooltip";
 
-const FALLBACK_SONGS = [
-  {
-    id: "local-1",
-    name: "Hati-Hati di Jalan",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Tulus" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }],
-  },
-  {
-    id: "local-2",
-    name: "Sial",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Mahalini" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }],
-  },
-  {
-    id: "local-3",
-    name: "Sempurna",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Andra and The Backbone" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }],
-  },
-  {
-    id: "local-4",
-    name: "Sumpah",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Naim Daniel" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }],
-  },
-  {
-    id: "local-5",
-    name: "Peluang Kedua",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Nabila Razali" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }],
-  },
-  {
-    id: "local-6",
-    name: "Cinta Luar Biasa",
-    album: { name: "name-music Local" },
-    artists: { primary: [{ name: "Andmesh" }] },
-    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
-    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" }],
-  },
-];
-
 
 const Songs = () => {
   const navigate = useNavigate();
@@ -72,29 +21,11 @@ const Songs = () => {
   const [searchclick, setSearchclick] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [playlistModalSong, setPlaylistModalSong] = useState(null);
-  const hasCatalogApi = Boolean(import.meta.env.VITE_API_BASE_URL);
 
   const { playSong, songlink, isPlaying, addToQueue } = usePlayer();
   const { isLiked, toggleLike } = useLikedSongs();
 
   const getSearch = async () => {
-    const runLocalFallback = () => {
-      const keyword = (requery || query).toLowerCase();
-      const localResults = FALLBACK_SONGS.filter((song) => {
-        const artist = song.artists?.primary?.[0]?.name?.toLowerCase() || "";
-        return song.name.toLowerCase().includes(keyword) || artist.includes(keyword);
-      });
-      setSearch(localResults.length ? localResults : FALLBACK_SONGS);
-      setHasMore(false);
-      setPage(1);
-      toast("Menampilkan lagu offline lokal", { icon: "🎵" });
-    };
-
-    if (!hasCatalogApi) {
-      runLocalFallback();
-      return;
-    }
-
     try {
       const { data } = await searchSongs(requery, page);
       const remoteResults = data?.data?.results || [];
@@ -114,7 +45,8 @@ const Songs = () => {
       }
     } catch (error) {
       console.error(error);
-      runLocalFallback();
+      toast.error("Search API failed. Coba query lain.");
+      setHasMore(false);
     }
   };
 

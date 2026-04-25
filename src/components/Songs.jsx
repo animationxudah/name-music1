@@ -11,6 +11,58 @@ import { searchSongs } from "../services/api";
 import AddToPlaylistModal from "./AddToPlaylistModal";
 import Tooltip from "./Tooltip";
 
+const FALLBACK_SONGS = [
+  {
+    id: "local-1",
+    name: "Hati-Hati di Jalan",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Tulus" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }],
+  },
+  {
+    id: "local-2",
+    name: "Sial",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Mahalini" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" }],
+  },
+  {
+    id: "local-3",
+    name: "Sempurna",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Andra and The Backbone" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }],
+  },
+  {
+    id: "local-4",
+    name: "Sumpah",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Naim Daniel" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }],
+  },
+  {
+    id: "local-5",
+    name: "Peluang Kedua",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Nabila Razali" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" }],
+  },
+  {
+    id: "local-6",
+    name: "Cinta Luar Biasa",
+    album: { name: "name-music Local" },
+    artists: { primary: [{ name: "Andmesh" }] },
+    image: [{ url: "/noimg.png" }, { url: "/noimg.png" }, { url: "/noimg.png" }],
+    downloadUrl: [{ quality: "160kbps", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" }],
+  },
+];
+
+
 const Songs = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -20,17 +72,36 @@ const Songs = () => {
   const [searchclick, setSearchclick] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [playlistModalSong, setPlaylistModalSong] = useState(null);
+  const hasCatalogApi = Boolean(import.meta.env.VITE_API_BASE_URL);
 
   const { playSong, songlink, isPlaying, addToQueue } = usePlayer();
   const { isLiked, toggleLike } = useLikedSongs();
 
   const getSearch = async () => {
+    const runLocalFallback = () => {
+      const keyword = (requery || query).toLowerCase();
+      const localResults = FALLBACK_SONGS.filter((song) => {
+        const artist = song.artists?.primary?.[0]?.name?.toLowerCase() || "";
+        return song.name.toLowerCase().includes(keyword) || artist.includes(keyword);
+      });
+      setSearch(localResults.length ? localResults : FALLBACK_SONGS);
+      setHasMore(false);
+      setPage(1);
+      toast("Menampilkan lagu offline lokal", { icon: "🎵" });
+    };
+
+    if (!hasCatalogApi) {
+      runLocalFallback();
+      return;
+    }
+
     try {
       const { data } = await searchSongs(requery, page);
-      const newData = data.data.results.filter(
+      const remoteResults = data?.data?.results || [];
+      const newData = remoteResults.filter(
         (newItem) => !search.some((prevItem) => prevItem.id === newItem.id)
       );
-      
+
       if (newData.length > 0) {
         setSearch((prev) => [...prev, ...newData]);
         setHasMore(newData.length > 0);
@@ -43,7 +114,7 @@ const Songs = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Search failed");
+      runLocalFallback();
     }
   };
 
@@ -238,7 +309,7 @@ const Songs = () => {
              </motion.div>
              <h2 className="text-3xl sm:text-xl font-black text-white mb-3">Symphony of a Billion Songs</h2>
              <p className="text-zinc-500 max-w-md">
-               Enter a song, artist, or album name to begin your musical journey with THE ULTIMATE SONGS.
+               Enter a song, artist, or album name to begin your musical journey with name-music.
              </p>
              <div className="mt-12 flex flex-wrap justify-center gap-3">
                {["Trending", "New Releases", "Top Charts", "Podcasts"].map(tag => (

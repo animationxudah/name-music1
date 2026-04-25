@@ -6,8 +6,50 @@ import BACKEND_URL from '../config/api';
 export const getHomeModules = (language) =>
   cachedGet(`${API_HOME_URL}/modules?language=${language}`);
 
-export const searchSongs = (query, page, limit = 40) =>
-  cachedGet(`${API_BASE_URL}/search/songs?query=${query}&page=${page}&limit=${limit}`);
+export const searchSongs = async (query, page = 1, limit = 40) => {
+  const encoded = encodeURIComponent(query || "");
+  const endpoint = `https://api.danzy.web.id/api/search/yts?q=${encoded}`;
+  const res = await axios.get(endpoint);
+
+  const payload = res?.data || {};
+  const candidateLists = [
+    payload?.result,
+    payload?.results,
+    payload?.data,
+    payload?.items,
+  ];
+  const rawList = candidateLists.find((arr) => Array.isArray(arr)) || [];
+
+  const mapped = rawList.slice(0, limit).map((item, idx) => {
+    const videoUrl = item?.url || item?.link || item?.videoUrl || item?.video_url || "";
+    const thumb = item?.thumbnail || item?.thumb || item?.image || item?.cover || "/noimg.png";
+    const title = item?.title || item?.name || item?.videoTitle || `Track ${idx + 1}`;
+    const artist = item?.author?.name || item?.channel?.name || item?.uploader || item?.artist || "YouTube";
+    const durationText = item?.duration?.timestamp || item?.duration || item?.timestamp || "";
+    const ytmp3Api = videoUrl
+      ? `https://api.sxtream.my.id/downloader/ytmp3?url=${encodeURIComponent(videoUrl)}`
+      : "";
+
+    return {
+      id: item?.videoId || item?.id || `${title}-${idx}`,
+      name: title,
+      subtitle: artist,
+      album: { name: `YouTube · ${durationText}`.trim() },
+      artists: { primary: [{ name: artist }] },
+      image: [{ url: thumb }, { url: thumb }, { url: thumb }],
+      source: "youtube",
+      downloadUrl: [
+        { quality: "96kbps", url: ytmp3Api },
+        { quality: "160kbps", url: ytmp3Api },
+        { quality: "320kbps", url: ytmp3Api },
+        { quality: "320kbps", url: ytmp3Api },
+        { quality: "320kbps", url: ytmp3Api },
+      ],
+    };
+  });
+
+  return { data: { data: { results: mapped } } };
+};
 
 export const getSongSuggestions = (id) =>
   cachedGet(`${API_BASE_URL}/songs/${id}/suggestions`);

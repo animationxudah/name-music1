@@ -38,6 +38,12 @@ const PlayerBar = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  const getPlayableUrl = (song) => {
+    const urls = song?.downloadUrl || [];
+    return urls?.[4]?.url || urls?.[0]?.url || song?.audioUrl || "";
+  };
+
+
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) {
@@ -265,7 +271,7 @@ const PlayerBar = () => {
                   }}
                   autoPlay
                   onEnded={next}
-                  src={e?.downloadUrl?.[4]?.url}
+                  src={getPlayableUrl(e)}
                   className="absolute opacity-0 pointer-events-none w-0 h-0"
                 ></audio>
               </div>
